@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Explorer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5; /* Light gray background */
+            color: #4a148c; /* Deep purple */
+            text-align: center;
+        }
+        header {
+            background-color: #6200ea; /* Vibrant purple */
+            color: white;
+            padding: 1em;
+        }
+        .container {
+            padding: 2em;
+            max-width: 600px;
+            margin: auto;
+            background-color: #ffffff; /* White background for the content area */
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        input[type="text"] {
+            width: 80%;
+            padding: 1em;
+            border: 2px solid #4a148c; /* Deep purple */
+            border-radius: 5px;
+            font-size: 1em;
+            margin-bottom: 1em;
+        }
+        button {
+            background-color: #4a148c; /* Deep purple */
+            color: white;
+            padding: 1em 2em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        button:hover {
+            background-color: #3f51b5; /* Indigo */
+        }
+        .definition {
+            margin-top: 2em;
+            padding: 1em;
+            border: 1px solid #4a148c; /* Deep purple */
+            border-radius: 5px;
+            background-color: #ffffff; /* White background for the definition area */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .nav-bar {
+            display: flex;
+            justify-content: center;
+            margin: 1em 0;
+        }
+        .nav-bar button {
+            margin: 0 0.5em;
+            background-color: #e91e63; /* Pink */
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <h1>Word Explorer</h1>
+        <p>Your go-to tool for discovering word meanings</p>
+    </header>
+
+    <!-- Navigation Bar -->
+    <div class="nav-bar">
+        <button onclick="clearHistory()">Clear History</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <h2>Find a Word Meaning</h2>
+        <form id="dictionary-form">
+            <input type="text" id="word-input" placeholder="Enter a word" required>
+            <button type="submit">Find Meaning</button>
+        </form>
+        <div id="definition" class="definition">
+            <p>Enter a word and click "Find Meaning" to see the definition here.</p>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        let searchHistory = [];
+
+        document.getElementById('dictionary-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent form from submitting the traditional way
+
+            const word = document.getElementById('word-input').value.trim();
+            const definitionDiv = document.getElementById('definition');
+
+            if (word === '') {
+                definitionDiv.innerHTML = '<p>Please enter a word to find its meaning.</p>';
+                return;
+            }
+
+            fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Word not found');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.title === "No Definitions Found") {
+                        definitionDiv.innerHTML = `<p>No definition found for "${word}".</p>`;
+                    } else {
+                        const meanings = data[0].meanings;
+                        let definitionHTML = `<h3>Definitions for "${word}":</h3>`;
+                        meanings.forEach(meaning => {
+                            meaning.definitions.forEach(def => {
+                                definitionHTML += `<p><strong>${meaning.partOfSpeech}:</strong> ${def.definition}</p>`;
+                            });
+                        });
+                        definitionDiv.innerHTML = definitionHTML;
+
+                        // Add to search history
+                        searchHistory.push(word);
+                    }
+                })
+                .catch(error => {
+                    definitionDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+                });
+        });
+
+        function clearHistory() {
+            searchHistory = [];
+            alert('Search history cleared.');
+        }
+    </script>
+</body>
+</html>
